@@ -268,8 +268,16 @@ def publish_to_confluence(html_content, config):
         "expand": "version",
     }
     resp = requests.get(search_url, headers=headers, params=params, verify=verify_ssl)
-    resp.raise_for_status()
-    results = resp.json().get("results", [])
+    if resp.status_code != 200:
+        print(f"Confluence API error (HTTP {resp.status_code}):")
+        print(resp.text[:500])
+        sys.exit(1)
+    try:
+        results = resp.json().get("results", [])
+    except requests.exceptions.JSONDecodeError:
+        print("Confluence returned non-JSON response:")
+        print(resp.text[:500])
+        sys.exit(1)
 
     if results:
         # Update existing page
