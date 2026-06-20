@@ -10,9 +10,10 @@ jobs:
   track-prs:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.GH_PAT }}
+      - name: Checkout
+        run: |
+          git clone https://x-access-token:${{ secrets.GH_PAT }}@github.com/intel-sandbox/personal.rbabu.tools.pr_tracker.git .
+
 
       - uses: actions/setup-python@v5
         with:
