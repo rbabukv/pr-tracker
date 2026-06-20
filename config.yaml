@@ -1,0 +1,26 @@
+# PR Tracker Configuration
+# GitHub usernames to track
+github_users:
+  - ck-intel
+  - ANSHUMAN87
+  - kpjeeja
+  - polisettyvarma
+  - ckvermaAI
+  - kalyank007
+  - roopaksrivastav
+  - siju-samuel
+  - rahulvijayaraghavan
+    
+
+# GitHub organizations/repos to search (leave empty to search all repos the users contribute to)
+# Format: "org/repo" or "org" (searches all repos in org)
+repos:
+  - sgl-project/sglang
+
+# Confluence settings
+confluence:
+  base_url: "https://wiki.ith.intel.com"
+  space_key: "AICFIndia"
+  page_title: "Open PR Tracker"
+  # Set parent_page_id to nest under an existing page (optional)
+  # parent_page_id: "123456"
