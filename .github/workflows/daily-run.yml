@@ -1,0 +1,26 @@
+name: Daily PR Tracker
+
+on:
+  schedule:
+    # 10:00 AM IST = 4:30 AM UTC
+    - cron: "30 4 * * *"
+  workflow_dispatch:
+
+jobs:
+  track-prs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run PR Tracker
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_PAT }}
+          CONFLUENCE_TOKEN: ${{ secrets.CONFLUENCE_TOKEN }}
+        run: python pr_tracker.py
