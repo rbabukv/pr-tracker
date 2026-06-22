@@ -10,7 +10,7 @@ Required environment variables:
 import os
 import sys
 import json
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 
 import requests
 import urllib3
@@ -179,9 +179,15 @@ def build_pr_table(config):
 
 def generate_html_table(rows):
     """Generate an HTML table suitable for Confluence storage format."""
-    now_str = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+    ist = timezone(timedelta(hours=5, minutes=30))
+    now_utc = datetime.now(timezone.utc)
+    now_ist = now_utc.astimezone(ist)
+    day = now_ist.day
+    suffix = "th" if 11 <= day <= 13 else {1: "st", 2: "nd", 3: "rd"}.get(day % 10, "th")
+    ist_str = now_ist.strftime(f"%-d{suffix} %B %Y, %H:%M IST")
+    utc_str = now_utc.strftime("%Y-%m-%d %H:%M UTC")
 
-    html = f'<p><strong>Last updated:</strong> {now_str}</p>\n'
+    html = f'<p><strong>Last updated:</strong> {ist_str} ({utc_str})</p>\n'
     html += '<table>\n<thead>\n<tr>\n'
     html += '<th>Author</th>\n'
     html += '<th>Repository</th>\n'
