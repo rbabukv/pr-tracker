@@ -140,6 +140,7 @@ def build_pr_table(config):
 
         reviews = fetch_reviews(repo, pr_number)
 
+        pr_author = pr["user"]["login"]
         bot_suffixes = ("[bot]",)
         reviewer_names = []
         approvers = []
@@ -147,9 +148,9 @@ def build_pr_table(config):
         for review in reviews:
             reviewer = review["user"]["login"]
             is_bot = reviewer.endswith(bot_suffixes[0])
-            if not is_bot and reviewer not in reviewer_names:
+            if not is_bot and reviewer != pr_author and reviewer not in reviewer_names:
                 reviewer_names.append(reviewer)
-            if review.get("state") == "APPROVED" and not is_bot:
+            if review.get("state") == "APPROVED" and not is_bot and reviewer != pr_author:
                 if reviewer not in approvers:
                     approvers.append(reviewer)
             submitted = review.get("submitted_at")
