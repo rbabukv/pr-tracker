@@ -6,18 +6,21 @@ github_users:
   - kpjeeja
   - polisettyvarma
   - ckvermaAI
-  - kalyank007
-  - roopaksrivastav
   - siju-samuel
   - rahulvijayaraghavan
   - Amrutha-M05
   - AnuSajikumar6264
-    
+  - AnuSajikumar6264
+  - dayanandav
+  - Amrutha-M05
+  - KMS07
+  - murthy-l-habana
 
 # GitHub organizations/repos to search (leave empty to search all repos the users contribute to)
 # Format: "org/repo" or "org" (searches all repos in org)
 repos:
   - sgl-project/sglang
+  - sgl-project/sglang-omni
 
 # Confluence settings
 confluence:
