@@ -11,6 +11,7 @@ import os
 import sys
 import json
 from datetime import datetime, timezone, timedelta
+from html import escape as html_escape
 
 import requests
 import urllib3
@@ -178,7 +179,15 @@ def build_pr_table(config):
     return rows
 
 
-def generate_html_table(rows):
+def group_by_repo(rows, repo_order):
+    """Group rows by repository, ordered by repo_order from config."""
+    grouped = {}
+    for row in rows:
+        grouped.setdefault(row["repo"], []).append(row)
+    return {repo: grouped[repo] for repo in repo_order if repo in grouped}
+
+
+def generate_html_table(rows, config):
     """Generate an HTML table suitable for Confluence storage format."""
     ist = timezone(timedelta(hours=5, minutes=30))
     now_utc = datetime.now(timezone.utc)
@@ -189,65 +198,81 @@ def generate_html_table(rows):
     utc_str = now_utc.strftime("%Y-%m-%d %H:%M UTC")
 
     html = f'<p><strong>Last updated:</strong> {ist_str} ({utc_str})</p>\n'
-    html += '<table>\n<thead>\n<tr>\n'
-    html += '<th>Author</th>\n'
-    html += '<th>Repository</th>\n'
-    html += '<th>PR</th>\n'
-    html += '<th>State</th>\n'
-    html += '<th>Last Modified</th>\n'
-    html += '<th>Last Reviewed</th>\n'
-    html += '<th>Reviewers</th>\n'
-    html += '<th>Approver(s)</th>\n'
-    html += '</tr>\n</thead>\n<tbody>\n'
-
-    for row in rows:
-        reviewers_str = ", ".join(row["reviewers"]) if row["reviewers"] else "—"
-        approvers_str = ", ".join(row["approvers"]) if row["approvers"] else "—"
-        html += '<tr>\n'
-        html += f'<td>{row["author"]}</td>\n'
-        html += f'<td>{row["repo"]}</td>\n'
-        html += f'<td><a href="{row["url"]}">#{row["number"]} {row["title"]}</a></td>\n'
-        html += f'<td>{row["state"]}</td>\n'
-        html += f'<td>{format_time(row["last_modified"])}</td>\n'
-        html += f'<td>{format_time(row["last_reviewed"])}</td>\n'
-        html += f'<td>{reviewers_str}</td>\n'
-        html += f'<td>{approvers_str}</td>\n'
-        html += '</tr>\n'
-
-    html += '</tbody>\n</table>\n'
+    html += '<ac:structured-macro ac:name="toc">\n'
+    html += '<ac:parameter ac:name="minLevel">2</ac:parameter>\n'
+    html += '<ac:parameter ac:name="maxLevel">3</ac:parameter>\n'
+    html += '</ac:structured-macro>\n'
 
     if not rows:
         html += '<p><em>No open PRs found for the configured users.</em></p>\n'
+        return html
+
+    grouped = group_by_repo(rows, config["repos"])
+
+    for repo, repo_rows in grouped.items():
+        html += f'<h3>{repo}</h3>\n'
+        html += '<table>\n<thead>\n<tr>\n'
+        html += '<th>S.No</th>\n'
+        html += '<th>Author</th>\n'
+        html += '<th>PR</th>\n'
+        html += '<th>State</th>\n'
+        html += '<th>Last Modified</th>\n'
+        html += '<th>Last Reviewed</th>\n'
+        html += '<th>Reviewers</th>\n'
+        html += '<th>Approver(s)</th>\n'
+        html += '</tr>\n</thead>\n<tbody>\n'
+
+        for idx, row in enumerate(repo_rows, 1):
+            reviewers_str = html_escape(", ".join(row["reviewers"])) if row["reviewers"] else "—"
+            approvers_str = html_escape(", ".join(row["approvers"])) if row["approvers"] else "—"
+            title = html_escape(row["title"])
+            author = html_escape(row["author"])
+            html += '<tr>\n'
+            html += f'<td>{idx}</td>\n'
+            html += f'<td>{author}</td>\n'
+            html += f'<td><a href="{row["url"]}">#{row["number"]} {title}</a></td>\n'
+            html += f'<td>{row["state"]}</td>\n'
+            html += f'<td>{format_time(row["last_modified"])}</td>\n'
+            html += f'<td>{format_time(row["last_reviewed"])}</td>\n'
+            html += f'<td>{reviewers_str}</td>\n'
+            html += f'<td>{approvers_str}</td>\n'
+            html += '</tr>\n'
+
+        html += '</tbody>\n</table>\n'
 
     return html
 
 
-def print_terminal_table(rows):
+def print_terminal_table(rows, config):
     """Print a readable table to the terminal."""
     if not rows:
         print("No open PRs found for the configured users.")
         return
 
-    fmt = "{:<15} {:<30} {:<50} {:<12} {:<14} {:<14} {:<30} {}"
-    header = fmt.format("Author", "Repo", "PR", "State", "Modified", "Reviewed", "Reviewers", "Approver(s)")
-    print(header)
-    print("—" * len(header))
+    grouped = group_by_repo(rows, config["repos"])
 
-    for row in rows:
-        reviewers_str = ", ".join(row["reviewers"]) if row["reviewers"] else "—"
-        approvers_str = ", ".join(row["approvers"]) if row["approvers"] else "—"
-        title = row["title"][:45] + "..." if len(row["title"]) > 45 else row["title"]
-        pr_str = f"#{row['number']} {title}"
-        print(fmt.format(
-            row["author"],
-            row["repo"],
-            pr_str,
-            row["state"],
-            format_time(row["last_modified"]),
-            format_time(row["last_reviewed"]),
-            reviewers_str,
-            approvers_str,
-        ))
+    fmt = "{:<5} {:<15} {:<50} {:<12} {:<14} {:<14} {:<30} {}"
+    for repo, repo_rows in grouped.items():
+        print(f"\n=== {repo} ===\n")
+        header = fmt.format("S.No", "Author", "PR", "State", "Modified", "Reviewed", "Reviewers", "Approver(s)")
+        print(header)
+        print("—" * len(header))
+
+        for idx, row in enumerate(repo_rows, 1):
+            reviewers_str = ", ".join(row["reviewers"]) if row["reviewers"] else "—"
+            approvers_str = ", ".join(row["approvers"]) if row["approvers"] else "—"
+            title = row["title"][:45] + "..." if len(row["title"]) > 45 else row["title"]
+            pr_str = f"#{row['number']} {title}"
+            print(fmt.format(
+                idx,
+                row["author"],
+                pr_str,
+                row["state"],
+                format_time(row["last_modified"]),
+                format_time(row["last_reviewed"]),
+                reviewers_str,
+                approvers_str,
+            ))
 
 
 def publish_to_confluence(html_content, config):
@@ -308,6 +333,9 @@ def publish_to_confluence(html_content, config):
 
         url = f"{base_url}/rest/api/content/{page_id}"
         resp = requests.put(url, headers=headers, data=json.dumps(payload), verify=verify_ssl)
+        if resp.status_code != 200:
+            print(f"Confluence update error (HTTP {resp.status_code}):")
+            print(resp.text[:1000])
         resp.raise_for_status()
         print(f"Updated Confluence page: {base_url}/pages/viewpage.action?pageId={page_id}")
     else:
@@ -351,10 +379,10 @@ def main():
     print(f"Found {len(rows)} open PR(s)\n")
 
     if args.dry_run:
-        print_terminal_table(rows)
+        print_terminal_table(rows, config)
         return
 
-    html = generate_html_table(rows)
+    html = generate_html_table(rows, config)
 
     if args.html:
         print(html)

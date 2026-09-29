@@ -15,12 +15,18 @@ github_users:
   - Amrutha-M05
   - KMS07
   - murthy-l-habana
-
+  - kareemshaik80
+  - pralay-das
+  - sspintel
+  - sakotkar
+  - jayachandranb-ai
+  - krishnanand-k
 # GitHub organizations/repos to search (leave empty to search all repos the users contribute to)
 # Format: "org/repo" or "org" (searches all repos in org)
 repos:
   - sgl-project/sglang
   - sgl-project/sglang-omni
+  - sgl-project/sgl-kernel-xpu
 
 # Confluence settings
 confluence:
