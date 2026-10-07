@@ -242,6 +242,21 @@ To run the tracker on a schedule (e.g., every weekday at 9 AM):
 
 ---
 
+## Claude Code Skill
+
+This repo includes a [Claude Code](https://claude.com/claude-code) skill at `.claude/skills/pr-tracker/SKILL.md`. Running Claude Code from the repo root makes the `/pr-tracker` command available:
+
+```
+/pr-tracker                                   # fetch PRs and update the Confluence page
+/pr-tracker --dry-run                         # preview the table in the terminal
+/pr-tracker --html --output /tmp/pr.html      # save HTML for preview
+/pr-tracker --add-user octocat --dry-run      # add a tracked user, then preview
+```
+
+You can also just ask Claude to "refresh the PR tracker". `GITHUB_TOKEN` and `CONFLUENCE_TOKEN` must be set in your environment.
+
+---
+
 ## Troubleshooting
 
 | Issue | Solution |
